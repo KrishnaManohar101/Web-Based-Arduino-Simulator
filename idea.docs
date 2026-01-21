@@ -1,0 +1,165 @@
+FOSSEE OSHW Winter Internship – 2025
+
+Note: Candidates must register for the FOSSEE Winter Internship – 2025 at 
+
+Internship under the OSHW (Open Source Hardware) Project
+The Open Source Hardware (OSHW) group under FOSSEE, IIT Bombay is developing open-source tools for electronics simulation, and virtual laboratories.
+
+As part of this effort, we invite applications from motivated students through a technical screening task designed to evaluate their ability to build end-to-end engineering systems.
+
+Area of Interest
+Open Source Electronics Simulation & Educational Tools
+This screening task evaluates skills in:
+Web-based engineering tool development
+Electronics abstraction and modeling
+Embedded systems fundamentals
+Software-driven hardware simulation
+
+Screening Task (with Detailed Task Description)
+Title
+Build a Minimal Web-Based Arduino Simulator for LED Control Using a Push Button (with Auto-Wiring, Configurable Pins, and Auto Code Generation)
+
+Background
+Modern web-based electronics tools like Wokwi and Circuito.io demonstrate the power of interactive simulation and automatic code generation in electronics learning. The OSHW initiative at FOSSEE aims to build a fully open-source academic platform that brings these capabilities together for education and research.
+In this screening task, participants are challenged to develop a minimal functional prototype that supports component selection, automatic pin connections, Arduino code generation, and basic logic-level simulation. The focus is on system integration, engineering correctness, and architectural design, rather than visual appearance or feature completeness.
+
+
+Task Breakdown 
+
+Candidates are expected to attempt the screening tasks sequentially (Task 1 → Task 2 → Task 3). Selection will be based on the number of tasks successfully completed and demonstrated; candidates completing a higher number of tasks will be given preference. Completion of even Task 1 alone may be sufficient for shortlisting, provided it is implemented correctly and demonstrated clearly.
+
+Task 1 – Web-Based Interface & Component Handling
+Objective
+Design a web-based interface that allows users to visually create a simple Arduino experiment.
+
+User Interface Design Guidelines:
+Provide a component palette on the left side of the screen containing the Arduino Uno, LED, and Push Button, from which users can drag components.
+
+
+Include a central working area (canvas) where users can drag and place components and build the circuit.
+
+
+Add a toolbar option to switch between component view and code view; when code view is selected, the automatically generated Arduino code should be displayed while keeping the circuit visible.
+
+
+Include Start and Stop buttons on the canvas to allow users to run and stop the simulation easily.
+
+UI design may be simple; functional correctness is mandatory.
+Use Wokwi elements. (Refer the Github links)
+
+Task 2 – Auto-Wiring Logic with Configurable Pins
+
+Objective
+Implement automatic component-to-Arduino pin connections with support for user-controlled pin reassignment.
+
+Scope & Constraints
+Controller: Arduino Uno only
+Components: LED, Push Button
+
+
+Default Pin Mapping (Mandatory Initial State)
+LED → Digital Pin 10
+Push Button → Digital Pin 2
+
+
+The simulator must automatically wire components and generate Arduino code for this default configuration.
+
+Pin Reconfiguration Rules
+Arduino digital pins 2 to 13 may be used
+One Arduino pin cannot be assigned to more than one component
+If LED occupies a pin, that pin must not be available for the push button
+If the button occupies a pin, that pin must not be available for the LED
+Users must be able to change pin assignments through the UI
+
+Task 3 – Auto Code Generation & Logic-Level Simulation
+Objective
+Generate Arduino code automatically and simulate the circuit behavior at a logic level.
+
+Auto Code Generation Requirements
+Generated code must include:
+pinMode()
+digitalWrite()
+digitalRead()
+Whenever pin assignments change:
+Wiring must update logically
+Arduino code must update automatically
+No manual code editing should be required
+
+Simulation Requirements
+Logic-level simulation only:
+Button pressed → GPIO HIGH
+LED ON when GPIO HIGH
+LED OFF when GPIO LOW
+
+Scope & Constraints
+Controller
+Arduino Uno only
+Components
+LED
+Push Button
+Default Pin Mapping (Mandatory Initial State)
+LED → Digital Pin 10
+Push Button → Digital Pin 2
+
+The simulator must automatically generate Arduino code for this default configuration.
+
+The platform must allow the user to change the pin number assigned.
+
+Rules:
+Arduino digital pins 2 to 13 may be used
+One Arduino pin cannot be assigned to more than one component
+If LED occupies a pin (e.g., D10), that pin must not appear as an option for the push button
+Likewise, if the button occupies a pin, that pin must be excluded for the LED
+
+The Arduino code must update automatically to reflect the new pin numbers
+
+Automatic Code Update Requirement
+Whenever a pin assignment is changed:
+The wiring must update logically
+The generated Arduino code must update automatically to reflect the new pin numbers
+No manual code editing should be required
+Mandatory End-to-End Flow
+A valid submission must demonstrate the complete workflow below:
+→ Select Arduino Uno
+→ Drag LED
+→ Drag Push Button
+→ Auto-wire (LED → D10, Button → D2)
+→ Auto-generate Arduino code
+→ Change pin numbers
+→ Code updates automatically
+→ Run simulation
+→ Button controls LED
+
+UI design may be simple — functional correctness is mandatory.
+
+
+Deliverables
+Candidates must submit:
+1 . Demo Video
+Screen recording (no voiceover required)
+Demonstrating:
+Drag-and-drop components
+Auto-wiring
+Pin reassignment
+Auto code regeneration
+Button → LED simulation
+
+Submission Requirements
+Submit the following through the official screening form:
+Undertaking / Self-Declaration / NOC
+Demo video link
+
+Reference Platforms & GitHub Repositories (For Guidance Only)
+Participants may refer to the following open-source and public platforms to understand expected behavior and architecture.
+Simulation Platforms
+Wokwi – https://wokwi.com (Partially Open Source)
+Wokwi GitHub – https://github.com/wokwi
+Circuito.io – https://www.circuito.io (Commercial)
+Open-Source Simulation Engines
+avr8js (Arduino simulation core) (Open Source)
+https://github.com/wokwi/avr8js
+rp2040js (Reference MCU simulator) (Open Source)
+https://github.com/wokwi/rp2040js
+UI & Visualization References
+Wokwi-elements (Open Source)
+https://github.com/wokwi/wokwi-elements
