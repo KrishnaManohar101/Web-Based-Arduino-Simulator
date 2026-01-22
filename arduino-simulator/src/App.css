@@ -1,1 +1,38 @@
-/* Cleaned up */
+/* Additional component styles */
+
+/* Smooth transitions for all components */
+.canvas-component {
+    will-change: transform;
+}
+
+/* Improve wokwi element integration */
+wokwi-arduino-uno,
+wokwi-led,
+wokwi-pushbutton {
+    display: block;
+}
+
+/* Selection styles */
+.canvas-component.selected wokwi-led,
+.canvas-component.selected wokwi-pushbutton {
+    filter: brightness(1.1);
+}
+
+/* Wire animation during simulation */
+@keyframes wire-pulse {
+    0% {
+        stroke-opacity: 0.8;
+    }
+
+    50% {
+        stroke-opacity: 1;
+    }
+
+    100% {
+        stroke-opacity: 0.8;
+    }
+}
+
+.wire.active {
+    animation: wire-pulse 1s ease-in-out infinite;
+}
