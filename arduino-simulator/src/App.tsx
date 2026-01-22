@@ -62,18 +62,36 @@ const Sidebar = () => {
     e.dataTransfer.setData('componentType', type);
   };
 
+  const renderComponentPreview = (type: ComponentType) => {
+    switch (type) {
+      case 'arduino-uno':
+        // @ts-ignore
+        return <wokwi-arduino-uno style={{ transform: 'scale(0.15)', transformOrigin: 'top left' }} />;
+      case 'led':
+        // @ts-ignore
+        return <wokwi-led color="red" />;
+      case 'pushbutton':
+        // @ts-ignore
+        return <wokwi-pushbutton color="red" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="sidebar">
-      <h3>Components</h3>
+      <h3>COMPONENTS</h3>
       <div className="component-list">
         {COMPONENT_PALETTE.map((comp) => (
           <div
             key={comp.type}
-            className="component-item"
+            className={`component-item ${comp.type === 'arduino-uno' ? 'arduino-preview' : ''}`}
             draggable
             onDragStart={(e) => handleDragStart(e, comp.type)}
           >
-            <span className="component-icon">{comp.icon}</span>
+            <div className="component-preview">
+              {renderComponentPreview(comp.type)}
+            </div>
             <span className="component-label">{comp.label}</span>
           </div>
         ))}
@@ -84,6 +102,7 @@ const Sidebar = () => {
     </div>
   );
 };
+
 
 const PropertiesPanel = ({
   component,
@@ -301,6 +320,21 @@ const Canvas = ({
 }: CanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  // ZOOM DISABLED - Uncomment to enable
+  // const [zoom, setZoom] = useState(1);
+  const zoom = 1; // Fixed zoom level
+
+  // const handleZoom = (delta: number) => {
+  //   setZoom(prev => Math.min(2, Math.max(0.25, prev + delta)));
+  // };
+
+  // const handleWheel = (e: React.WheelEvent) => {
+  //   if (e.ctrlKey) {
+  //     e.preventDefault();
+  //     const delta = e.deltaY > 0 ? -0.1 : 0.1;
+  //     handleZoom(delta);
+  //   }
+  // };
 
   const handleDragStart = (e: DragEvent, id: string) => {
     e.dataTransfer.setData('source', 'canvas');
@@ -321,8 +355,8 @@ const Canvas = ({
     if (source === 'canvas' && canvasRef.current) {
       const canvasRect = canvasRef.current.getBoundingClientRect();
       const id = e.dataTransfer.getData('componentId');
-      const x = e.clientX - canvasRect.left - dragOffset.x;
-      const y = e.clientY - canvasRect.top - dragOffset.y;
+      const x = (e.clientX - canvasRect.left - dragOffset.x) / zoom;
+      const y = (e.clientY - canvasRect.top - dragOffset.y) / zoom;
       onPositionUpdate(id, Math.max(0, x), Math.max(0, y));
     } else {
       onDrop(e);
@@ -338,6 +372,7 @@ const Canvas = ({
       className="canvas"
       onDrop={handleLocalDrop}
       onDragOver={onDragOver}
+      // onWheel={handleWheel} // ZOOM DISABLED
       onClick={(e) => {
         if (e.target === e.currentTarget) onSelect(null);
       }}
@@ -360,61 +395,79 @@ const Canvas = ({
         {isRunning && <span className="sim-status">Simulation Running</span>}
       </div>
 
-      <WireLayer components={components} arduinoPosition={arduinoPosition} />
+      {/* ZOOM DISABLED - Uncomment to enable
+      <div className="zoom-controls">
+        <button onClick={() => handleZoom(-0.1)} className="zoom-btn">−</button>
+        <span className="zoom-level">{Math.round(zoom * 100)}%</span>
+        <button onClick={() => handleZoom(0.1)} className="zoom-btn">+</button>
+        <button onClick={() => setZoom(1)} className="zoom-btn reset">Reset</button>
+      </div>
+      */}
 
-      {components.length === 0 && (
-        <div className="placeholder-text">
-          <span className="placeholder-icon">📦</span>
-          <span>Drag components here to build your circuit</span>
-        </div>
-      )}
+      <div
+        className="canvas-content"
+        style={{
+          transform: `scale(${zoom})`,
+          transformOrigin: 'top left',
+        }}
+      >
+        <WireLayer components={components} arduinoPosition={arduinoPosition} />
 
-      {components.map((comp) => (
-        <div
-          key={comp.id}
-          draggable
-          onDragStart={(e) => handleDragStart(e, comp.id)}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(comp.id);
-          }}
-          className={`canvas-component ${selectedId === comp.id ? 'selected' : ''}`}
-          style={{
-            position: 'absolute',
-            left: comp.position.x,
-            top: comp.position.y,
-          }}
-        >
-          {/* @ts-ignore */}
-          {comp.type === 'arduino-uno' && <wokwi-arduino-uno />}
-          {comp.type === 'led' && (
-            <div className="led-wrapper">
-              {/* @ts-ignore */}
-              <wokwi-led
-                color="red"
-                label={comp.pin ? `D${comp.pin}` : ''}
-                value={comp.pin && pinValues[comp.pin] ? true : false}
-              />
-              {comp.pin && pinValues[comp.pin] && <div className="led-glow" />}
-            </div>
-          )}
-          {comp.type === 'pushbutton' && (
-            <div
-              className={`button-wrapper ${isRunning ? 'interactive' : ''}`}
-              onMouseDown={() => isRunning && onButtonPress(comp.id, true)}
-              onMouseUp={() => isRunning && onButtonPress(comp.id, false)}
-              onMouseLeave={() => isRunning && onButtonPress(comp.id, false)}
-            >
-              {/* @ts-ignore */}
-              <wokwi-pushbutton color="red" label={comp.pin ? `D${comp.pin}` : ''} />
-              {isRunning && <div className="button-hint">Click & Hold</div>}
-            </div>
-          )}
-        </div>
-      ))}
+        {components.length === 0 && (
+          <div className="placeholder-text">
+            <span className="placeholder-icon">📦</span>
+            <span>Drag components here to build your circuit</span>
+          </div>
+        )}
+
+        {components.map((comp) => (
+          <div
+            key={comp.id}
+            draggable
+            onDragStart={(e) => handleDragStart(e, comp.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(comp.id);
+            }}
+            className={`canvas-component ${selectedId === comp.id ? 'selected' : ''}`}
+            style={{
+              position: 'absolute',
+              left: comp.position.x,
+              top: comp.position.y,
+            }}
+          >
+            {/* @ts-ignore */}
+            {comp.type === 'arduino-uno' && <wokwi-arduino-uno />}
+            {comp.type === 'led' && (
+              <div className="led-wrapper">
+                {/* @ts-ignore */}
+                <wokwi-led
+                  color="red"
+                  label={comp.pin ? `D${comp.pin}` : ''}
+                  value={comp.pin && pinValues[comp.pin] ? true : false}
+                />
+                {comp.pin && pinValues[comp.pin] && <div className="led-glow" />}
+              </div>
+            )}
+            {comp.type === 'pushbutton' && (
+              <div
+                className={`button-wrapper ${isRunning ? 'interactive' : ''}`}
+                onMouseDown={() => isRunning && onButtonPress(comp.id, true)}
+                onMouseUp={() => isRunning && onButtonPress(comp.id, false)}
+                onMouseLeave={() => isRunning && onButtonPress(comp.id, false)}
+              >
+                {/* @ts-ignore */}
+                <wokwi-pushbutton color="red" label={comp.pin ? `D${comp.pin}` : ''} />
+                {isRunning && <div className="button-hint">Click & Hold</div>}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
+
 
 const CodePanel = ({ code }: { code: string }) => (
   <div className="code-panel">
