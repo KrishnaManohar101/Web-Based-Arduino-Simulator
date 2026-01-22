@@ -520,10 +520,21 @@ const generateCode = (components: CircuitComponent[]) => {
   // Loop function
   code += `void loop() {\n`;
   if (buttons.length > 0 && leds.length > 0) {
-    code += `  // Read button state\n`;
-    code += `  int buttonState = digitalRead(buttonPin);\n\n`;
-    code += `  // Control LED based on button\n`;
-    code += `  if (buttonState == HIGH) {\n`;
+    code += `  // Read button states\n`;
+    buttons.forEach((_, i) => {
+      const suffix = i > 0 ? i + 1 : '';
+      code += `  int buttonState${suffix} = digitalRead(buttonPin${suffix});\n`;
+    });
+    code += `\n`;
+    
+    // Build condition for any button pressed
+    const buttonConditions = buttons.map((_, i) => {
+      const suffix = i > 0 ? i + 1 : '';
+      return `buttonState${suffix} == HIGH`;
+    }).join(' || ');
+    
+    code += `  // Control LED based on button(s)\n`;
+    code += `  if (${buttonConditions}) {\n`;
     leds.forEach((_, i) => {
       code += `    digitalWrite(ledPin${i > 0 ? i + 1 : ''}, HIGH);\n`;
     });
