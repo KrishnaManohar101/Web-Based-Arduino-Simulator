@@ -19,25 +19,26 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; icon: string }[] 
 
 // Arduino Uno pin positions (relative offsets from the Arduino component top-left)
 // Digital pins are along the top edge of the Arduino
+// D2-D7 are on the right, D8-D13 are on the left
 const ARDUINO_PIN_OFFSETS: Record<string, { x: number; y: number }> = {
-  '2': { x: 273, y: 12 },
-  '3': { x: 263, y: 12 },
-  '4': { x: 253, y: 12 },
-  '5': { x: 243, y: 12 },
-  '6': { x: 233, y: 12 },
-  '7': { x: 223, y: 12 },
-  '8': { x: 208, y: 12 },
-  '9': { x: 198, y: 12 },
-  '10': { x: 188, y: 12 },
-  '11': { x: 178, y: 12 },
-  '12': { x: 168, y: 12 },
-  '13': { x: 158, y: 12 },
-  // GND pins on the Arduino (there are multiple)
-  'GND1': { x: 143, y: 12 },  // GND pin near digital pins (between pin 13 and AREF)
-  'GND2': { x: 127, y: 12 },  // GND in power section
-  // Power pins
-  '5V': { x: 117, y: 12 },
-  '3.3V': { x: 107, y: 12 },
+  '2': { x: 243, y: 12 },
+  '3': { x: 233, y: 12 },
+  '4': { x: 223, y: 12 },
+  '5': { x: 213, y: 12 },
+  '6': { x: 203, y: 12 },
+  '7': { x: 193, y: 12 },
+  '8': { x: 178, y: 12 },
+  '9': { x: 168, y: 12 },
+  '10': { x: 158, y: 12 },
+  '11': { x: 148, y: 12 },
+  '12': { x: 138, y: 12 },
+  '13': { x: 128, y: 12 },
+  // GND pins on the Arduino - these are in the POWER section at the bottom of the board
+  'GND1': { x: 175, y: 195 },  // First GND pin in power header
+  'GND2': { x: 185, y: 195 },  // Second GND pin in power header
+  // Power pins (also at bottom)
+  '5V': { x: 165, y: 195 },
+  '3.3V': { x: 155, y: 195 },
 };
 
 // Component-specific pin offsets (relative to component's top-left position)
