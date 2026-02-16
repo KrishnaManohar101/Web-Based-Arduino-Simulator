@@ -2,7 +2,14 @@ import { useState, useEffect, useRef, type DragEvent } from 'react';
 import '@wokwi/elements';
 import './App.css';
 
-type ComponentType = 'arduino-uno' | 'led' | 'pushbutton' | 'mpu6050';
+type ComponentType = 'arduino-uno' | 'led' | 'pushbutton' | 'mpu6050' | 'ssd1306' |
+  'arduino-mega' | 'arduino-nano' | 'esp32-devkit-v1' | 'pi-pico' | 'franzininho' | 'nano-rp2040-connect' |
+  'dht22' | 'hc-sr04' | 'potentiometer' | 'slide-potentiometer' | 'slide-switch' | 'dip-switch-8' | 'membrane-keypad' | 'ky-040' |
+  'photoresistor-sensor' | 'pir-motion-sensor' | 'gas-sensor' | 'ntc-temperature-sensor' | 'heart-beat-sensor' | 'tilt-switch' |
+  'ir-receiver' | 'ir-remote' | 'analog-joystick' | 'rotary-dialer' |
+  '7segment' | 'lcd1602' | 'lcd2004' | 'neopixel' | 'neopixel-matrix' | 'servo' | 'buzzer' | 'led-ring' | 'led-bar-graph' |
+  'stepper-motor' | 'biaxial-stepper' | 'ili9341' |
+  'resistor' | 'capacitor' | 'relay-module' | 'logic-analyzer';
 
 interface CircuitComponent {
   id: string;
@@ -16,6 +23,51 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; icon: string }[] 
   { type: 'led', label: 'LED', icon: '💡' },
   { type: 'pushbutton', label: 'Push Button', icon: '🔘' },
   { type: 'mpu6050', label: 'MPU6050', icon: '📟' },
+  { type: 'ssd1306', label: 'OLED Display', icon: '📺' },
+  // Microcontrollers
+  { type: 'arduino-mega', label: 'Arduino Mega', icon: '🟦' },
+  { type: 'arduino-nano', label: 'Arduino Nano', icon: '🔹' },
+  { type: 'esp32-devkit-v1', label: 'ESP32', icon: '📶' },
+  { type: 'pi-pico', label: 'Pi Pico', icon: '🍓' },
+  { type: 'franzininho', label: 'Franzininho', icon: '🐝' },
+  { type: 'nano-rp2040-connect', label: 'RP2040 Connect', icon: '📡' },
+  // Sensors & Input
+  { type: 'dht22', label: 'DHT22', icon: '🌡️' },
+  { type: 'hc-sr04', label: 'Ultrasonic', icon: '🦇' },
+  { type: 'potentiometer', label: 'Potentiometer', icon: '🎛️' },
+  { type: 'slide-potentiometer', label: 'Slide Pot', icon: '📏' },
+  { type: 'slide-switch', label: 'Slide Switch', icon: '🔛' },
+  { type: 'dip-switch-8', label: 'DIP Switch 8', icon: '🎹' },
+  { type: 'membrane-keypad', label: 'Keypad', icon: '🔢' },
+  { type: 'ky-040', label: 'Rotary Encoder', icon: '🔄' },
+  { type: 'photoresistor-sensor', label: 'Photoresistor', icon: '☀️' },
+  { type: 'pir-motion-sensor', label: 'Motion Sensor', icon: '🏃' },
+  { type: 'gas-sensor', label: 'Gas Sensor', icon: '⛽' },
+  { type: 'ntc-temperature-sensor', label: 'NTC Temp', icon: '🌡️' },
+  { type: 'heart-beat-sensor', label: 'Heart Beat', icon: '❤️' },
+  { type: 'tilt-switch', label: 'Tilt Switch', icon: '📐' },
+  { type: 'ir-receiver', label: 'IR Receiver', icon: '📡' },
+  { type: 'ir-remote', label: 'IR Remote', icon: '📱' },
+  { type: 'analog-joystick', label: 'Joystick', icon: '🕹️' },
+  { type: 'rotary-dialer', label: 'Rotary Dialer', icon: '☎️' },
+  // Outputs
+  { type: '7segment', label: '7-Segment', icon: '8️⃣' },
+  { type: 'lcd1602', label: 'LCD 16x2', icon: '📟' },
+  { type: 'lcd2004', label: 'LCD 20x4', icon: '📟' },
+  { type: 'neopixel', label: 'NeoPixel', icon: '🌈' },
+  { type: 'neopixel-matrix', label: 'NeoPixel Matrix', icon: '▦' },
+  { type: 'servo', label: 'Servo', icon: '🦾' },
+  { type: 'buzzer', label: 'Buzzer', icon: '🔊' },
+  { type: 'led-ring', label: 'LED Ring', icon: '⭕' },
+  { type: 'led-bar-graph', label: 'Bar Graph', icon: '📊' },
+  { type: 'stepper-motor', label: 'Stepper', icon: '⚙️' },
+  { type: 'biaxial-stepper', label: 'Biaxial Stepper', icon: '⚙️' },
+  { type: 'ili9341', label: 'TFT Display', icon: '🖥️' },
+  // Helpers
+  { type: 'resistor', label: 'Resistor', icon: '⚡' },
+  { type: 'capacitor', label: 'Capacitor', icon: '🔋' },
+  { type: 'relay-module', label: 'Relay', icon: '🔌' },
+  { type: 'logic-analyzer', label: 'Logic Analyzer', icon: '📈' },
 ];
 
 // Arduino Uno pin positions (relative offsets from the Arduino component top-left)
@@ -54,6 +106,15 @@ const MPU6050_PIN_OFFSETS = {
   SDA: { x: 49, y: 8 },   // Pin 5 (SDA)
 };
 
+// SSD1306 OLED pin offsets (Based on 8-pin layout: SDA, SCL, DC, RST, CS, 3V3, VIN, GND)
+// Pin 1 (SDA) is at x=23, spacing ~15px
+const SSD1306_PIN_OFFSETS = {
+  SDA: { x: 23, y: 8 },   // Pin 1
+  SCL: { x: 38, y: 8 },   // Pin 2
+  VCC: { x: 113, y: 8 },  // Pin 7 (Vin)
+  GND: { x: 128, y: 8 },  // Pin 8 (GND)
+};
+
 // Component-specific pin offsets (relative to component's top-left position)
 // LED: has anode (longer leg, +) and cathode (shorter leg, -)
 const LED_PIN_OFFSETS = {
@@ -70,10 +131,17 @@ const BUTTON_PIN_OFFSETS = {
 };
 
 const Sidebar = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+
   const handleDragStart = (e: DragEvent, type: ComponentType) => {
     e.dataTransfer.setData('source', 'sidebar');
     e.dataTransfer.setData('componentType', type);
   };
+
+  const filteredComponents = COMPONENT_PALETTE.filter(comp =>
+    comp.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    comp.type.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const renderComponentPreview = (type: ComponentType) => {
     switch (type) {
@@ -89,16 +157,29 @@ const Sidebar = () => {
       case 'mpu6050':
         // @ts-ignore
         return <wokwi-mpu6050 style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }} />;
+      case 'ssd1306':
+        // @ts-ignore
+        return <wokwi-ssd1306 style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }} />;
       default:
-        return null;
+        // @ts-ignore
+        return <div style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}>{renderGenericComponent(type)}</div>;
     }
   };
 
   return (
     <div className="sidebar">
       <h3>COMPONENTS</h3>
+      <div className="search-container">
+        <input
+          type="text"
+          className="component-search"
+          placeholder="Search components..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
       <div className="component-list">
-        {COMPONENT_PALETTE.map((comp) => (
+        {filteredComponents.map((comp) => (
           <div
             key={comp.type}
             className={`component-item ${comp.type === 'arduino-uno' ? 'arduino-preview' : ''}`}
@@ -111,6 +192,9 @@ const Sidebar = () => {
             <span className="component-label">{comp.label}</span>
           </div>
         ))}
+        {filteredComponents.length === 0 && (
+          <div className="no-start-results">No components found</div>
+        )}
       </div>
       <div className="sidebar-info">
         <p>Drag components to the canvas to build your circuit</p>
@@ -141,10 +225,24 @@ const PropertiesPanel = ({
 
   const getComponentDisplayName = (type: ComponentType) => {
     switch (type) {
-      case 'arduino-uno': return 'Arduino Uno';
-      case 'led': return 'LED';
-      case 'pushbutton': return 'Push Button';
-      default: return type;
+      case 'arduino-uno':
+        // @ts-ignore
+        return <wokwi-arduino-uno style={{ transform: 'scale(0.15)', transformOrigin: 'top left' }} />;
+      case 'led':
+        // @ts-ignore
+        return <wokwi-led color="red" />;
+      case 'pushbutton':
+        // @ts-ignore
+        return <wokwi-pushbutton color="red" />;
+      case 'mpu6050':
+        // @ts-ignore
+        return <wokwi-mpu6050 style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }} />;
+      case 'ssd1306':
+        // @ts-ignore
+        return <wokwi-ssd1306 style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }} />;
+      default:
+        // @ts-ignore
+        return <div style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}>{renderGenericComponent(type)}</div>;
     }
   };
 
@@ -198,8 +296,72 @@ const WireLayer = ({
 
   components
   components
-    .filter(c => c.type !== 'arduino-uno' && (c.pin || c.type === 'mpu6050'))
+    .filter(c => c.type !== 'arduino-uno' && (c.pin || c.type === 'mpu6050' || c.type === 'ssd1306'))
     .forEach(comp => {
+      if (comp.type === 'ssd1306') {
+        // SSD1306 Wiring
+        // VCC -> 5V
+        const vccX = comp.position.x + SSD1306_PIN_OFFSETS.VCC.x;
+        const vccY = comp.position.y + SSD1306_PIN_OFFSETS.VCC.y;
+        const arduino5V = ARDUINO_PIN_OFFSETS['5V'];
+        const a5vX = arduinoPosition.x + arduino5V.x;
+        const a5vY = arduinoPosition.y + arduino5V.y;
+
+        wires.push({
+          id: `${comp.id}-vcc`,
+          path: `M ${a5vX} ${a5vY} C ${a5vX} ${(a5vY + vccY) / 2}, ${vccX} ${(a5vY + vccY) / 2}, ${vccX} ${vccY}`,
+          color: '#ff4444',
+          label: '5V',
+          labelPos: { x: (a5vX + vccX) / 2, y: (a5vY + vccY) / 2 }
+        });
+
+        // GND -> GND
+        const gndOffset = ARDUINO_PIN_OFFSETS['GND1'];
+        const arduinoGndX = arduinoPosition.x + gndOffset.x;
+        const arduinoGndY = arduinoPosition.y + gndOffset.y;
+        const gndX = comp.position.x + SSD1306_PIN_OFFSETS.GND.x;
+        const gndY = comp.position.y + SSD1306_PIN_OFFSETS.GND.y;
+
+        wires.push({
+          id: `${comp.id}-gnd`,
+          path: `M ${arduinoGndX} ${arduinoGndY} C ${arduinoGndX} ${(arduinoGndY + gndY) / 2}, ${gndX} ${(arduinoGndY + gndY) / 2}, ${gndX} ${gndY}`,
+          color: '#333333',
+          label: 'GND',
+          labelPos: { x: (arduinoGndX + gndX) / 2, y: (arduinoGndY + gndY) / 2 }
+        });
+
+        // SCL -> A5
+        const sclX = comp.position.x + SSD1306_PIN_OFFSETS.SCL.x;
+        const sclY = comp.position.y + SSD1306_PIN_OFFSETS.SCL.y;
+        const arduinoSCL = ARDUINO_PIN_OFFSETS['A5'];
+        const asclX = arduinoPosition.x + arduinoSCL.x;
+        const asclY = arduinoPosition.y + arduinoSCL.y;
+
+        wires.push({
+          id: `${comp.id}-scl`,
+          path: `M ${asclX} ${asclY} C ${asclX} ${(asclY + sclY) / 2}, ${sclX} ${(asclY + sclY) / 2}, ${sclX} ${sclY}`,
+          color: '#FFeb3b', // Yellow
+          label: 'SCL',
+          labelPos: { x: (asclX + sclX) / 2, y: (asclY + sclY) / 2 }
+        });
+
+        // SDA -> A4
+        const sdaX = comp.position.x + SSD1306_PIN_OFFSETS.SDA.x;
+        const sdaY = comp.position.y + SSD1306_PIN_OFFSETS.SDA.y;
+        const arduinoSDA = ARDUINO_PIN_OFFSETS['A4'];
+        const asdaX = arduinoPosition.x + arduinoSDA.x;
+        const asdaY = arduinoPosition.y + arduinoSDA.y;
+
+        wires.push({
+          id: `${comp.id}-sda`,
+          path: `M ${asdaX} ${asdaY} C ${asdaX} ${(asdaY + sdaY) / 2}, ${sdaX} ${(asdaY + sdaY) / 2}, ${sdaX} ${sdaY}`,
+          color: '#4CAF50', // Green
+          label: 'SDA',
+          labelPos: { x: (asdaX + sdaX) / 2, y: (asdaY + sdaY) / 2 }
+        });
+        return;
+      }
+
       if (comp.type === 'mpu6050') {
         // MPU6050 Wiring
         // VCC -> 5V
@@ -388,6 +550,56 @@ interface CanvasProps {
   onPositionUpdate: (id: string, x: number, y: number) => void;
 }
 
+const renderGenericComponent = (type: ComponentType) => {
+  switch (type) {
+    // Microcontrollers
+    case 'arduino-mega': return <wokwi-arduino-mega />;
+    case 'arduino-nano': return <wokwi-arduino-nano />;
+    case 'esp32-devkit-v1': return <wokwi-esp32-devkit-v1 />;
+    case 'pi-pico': return <wokwi-pi-pico />;
+    case 'franzininho': return <wokwi-franzininho />;
+    case 'nano-rp2040-connect': return <wokwi-nano-rp2040-connect />;
+    // Sensors & Input
+    case 'dht22': return <wokwi-dht22 />;
+    case 'hc-sr04': return <wokwi-hc-sr04 />;
+    case 'potentiometer': return <wokwi-potentiometer />;
+    case 'slide-potentiometer': return <wokwi-slide-potentiometer />;
+    case 'slide-switch': return <wokwi-slide-switch />;
+    case 'dip-switch-8': return <wokwi-dip-switch-8 />;
+    case 'membrane-keypad': return <wokwi-membrane-keypad />;
+    case 'ky-040': return <wokwi-ky-040 />;
+    case 'photoresistor-sensor': return <wokwi-photoresistor-sensor />;
+    case 'pir-motion-sensor': return <wokwi-pir-motion-sensor />;
+    case 'gas-sensor': return <wokwi-gas-sensor />;
+    case 'ntc-temperature-sensor': return <wokwi-ntc-temperature-sensor />;
+    case 'heart-beat-sensor': return <wokwi-heart-beat-sensor />;
+    case 'tilt-switch': return <wokwi-tilt-switch />;
+    case 'ir-receiver': return <wokwi-ir-receiver />;
+    case 'ir-remote': return <wokwi-ir-remote />;
+    case 'analog-joystick': return <wokwi-analog-joystick />;
+    case 'rotary-dialer': return <wokwi-rotary-dialer />;
+    // Outputs
+    case '7segment': return <wokwi-7segment />;
+    case 'lcd1602': return <wokwi-lcd1602 />;
+    case 'lcd2004': return <wokwi-lcd2004 />;
+    case 'neopixel': return <wokwi-neopixel />;
+    case 'neopixel-matrix': return <wokwi-neopixel-matrix />;
+    case 'servo': return <wokwi-servo />;
+    case 'buzzer': return <wokwi-buzzer />;
+    case 'led-ring': return <wokwi-neopixel-ring />;
+    case 'led-bar-graph': return <wokwi-led-bar-graph />;
+    case 'stepper-motor': return <wokwi-stepper-motor />;
+    case 'biaxial-stepper': return <wokwi-biaxial-stepper />;
+    case 'ili9341': return <wokwi-ili9341 />;
+    // Helpers
+    case 'resistor': return <wokwi-resistor />;
+    case 'capacitor': return <wokwi-capacitor />;
+    case 'relay-module': return <wokwi-ks2e-m-dc5 />;
+    case 'logic-analyzer': return <wokwi-logic-analyzer />;
+    default: return null;
+  }
+};
+
 const Canvas = ({
   components,
   onDrop,
@@ -547,6 +759,14 @@ const Canvas = ({
               // @ts-ignore
               <wokwi-mpu6050 />
             )}
+            {comp.type === 'ssd1306' && (
+              // @ts-ignore
+              <wokwi-ssd1306 />
+            )}
+
+            {/* Generic rendering for other components */}
+            {/* @ts-ignore */}
+            {renderGenericComponent(comp.type)}
           </div>
         ))}
       </div>
@@ -579,7 +799,8 @@ const generateCode = (components: CircuitComponent[]) => {
 // Default Pin Mapping:
 // - LED → Digital Pin 10
 // - Push Button → Digital Pin 2
-// - MPU6050 → SDA (A4), SCL (A5)`;
+// - MPU6050 → SDA (A4), SCL (A5)
+// - OLED Display → SDA (A4), SCL (A5)`;
   }
 
   let code = `// Auto-generated Arduino Code
@@ -592,6 +813,20 @@ const generateCode = (components: CircuitComponent[]) => {
     code += `#include <Wire.h>\n`;
     code += `#include <MPU6050.h>\n\n`;
     code += `MPU6050 mpu;\n\n`;
+  }
+
+  // SSD1306 Includes
+  const oleds = components.filter(c => c.type === 'ssd1306');
+  if (oleds.length > 0) {
+    if (!code.includes('#include <Wire.h>')) {
+      code += `#include <Wire.h>\n`;
+    }
+    code += `#include <Adafruit_GFX.h>\n`;
+    code += `#include <Adafruit_SSD1306.h>\n\n`;
+    code += `#define SCREEN_WIDTH 128\n`;
+    code += `#define SCREEN_HEIGHT 64\n`;
+    code += `#define OLED_RESET    -1\n`;
+    code += `Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);\n\n`;
   }
 
   // Pin definitions
@@ -610,6 +845,21 @@ const generateCode = (components: CircuitComponent[]) => {
     code += `  Wire.begin();\n`;
     code += `  mpu.initialize();\n`;
     code += `  Serial.println("MPU6050 Initialized");\n`;
+  }
+  if (oleds.length > 0) {
+    if (mpus.length === 0) code += `  Wire.begin();\n`;
+    code += `  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {\n`;
+    code += `    Serial.println(F("SSD1306 allocation failed"));\n`;
+    code += `    for(;;);\n`;
+    code += `  }\n`;
+    code += `  display.display();\n`;
+    code += `  delay(2000);\n`;
+    code += `  display.clearDisplay();\n`;
+    code += `  display.setTextSize(1);\n`;
+    code += `  display.setTextColor(SSD1306_WHITE);\n`;
+    code += `  display.setCursor(0, 0);\n`;
+    code += `  display.println("Hello, World!");\n`;
+    code += `  display.display();\n`;
   }
   leds.forEach((_, i) => {
     code += `  pinMode(ledPin${i > 0 ? i + 1 : ''}, OUTPUT);\n`;

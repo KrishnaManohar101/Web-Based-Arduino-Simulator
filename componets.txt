@@ -5,6 +5,8 @@ arduino-mega
 esp32-devkit-v1
 franzininho
 nano-rp2040-connect
+
+
 Input / Sensors
 pushbutton & pushbutton-6mm
 analog-joystick
@@ -24,6 +26,8 @@ heart-beat-sensor
 mpu6050 (Accelerometer/Gyro)
 tilt-switch
 ir-receiver & ir-remote
+
+
 Output / Display
 led, rgb-led, led-bar-graph, led-ring
 7segment
@@ -32,6 +36,7 @@ ssd1306 (OLED)
 oli9341 (TFT)
 buzzer
 neopixel & neopixel-matrix
+
 Motors & Actuators
 servo
 stepper-motor
