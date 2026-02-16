@@ -582,3 +582,71 @@ button:disabled {
   overflow: auto;
   white-space: pre;
 }
+
+/* Serial Monitor */
+.serial-monitor {
+  position: absolute;
+  bottom: 20px;
+  right: 370px;
+  /* Left of code panel */
+  width: 400px;
+  height: 300px;
+  background-color: #0d0d0d;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.serial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.serial-header h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  padding: 0;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: var(--danger-color);
+  background: transparent;
+  border: none;
+}
+
+.serial-content {
+  flex: 1;
+  padding: 0.75rem;
+  overflow-y: auto;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8rem;
+  color: #00ff00;
+  /* distinct terminal green */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.serial-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+}

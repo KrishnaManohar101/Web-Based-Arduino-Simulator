@@ -884,9 +884,21 @@ const generateCode = (components: CircuitComponent[]) => {
     code += `  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);\n`;
     code += `  Serial.print("AX: "); Serial.print(ax);\n`;
     code += `  Serial.print(" AY: "); Serial.print(ay);\n`;
-    code += `  Serial.print(" AZ: "); Serial.println(az);\n`;
+    code += `  Serial.print(" AZ: "); Serial.println(az);\n\n`;
+
+    if (oleds.length > 0) {
+      code += `  // Display on OLED\n`;
+      code += `  display.clearDisplay();\n`;
+      code += `  display.setCursor(0, 0);\n`;
+      code += `  display.println("MPU6050 Data");\n`;
+      code += `  display.print("AX: "); display.println(ax);\n`;
+      code += `  display.print("AY: "); display.println(ay);\n`;
+      code += `  display.print("AZ: "); display.println(az);\n`;
+      code += `  display.display();\n`;
+    }
     code += `  delay(100);\n\n`;
   }
+
   if (buttons.length > 0 && leds.length > 0) {
     code += `  // Read button states\n`;
     buttons.forEach((_, i) => {
@@ -927,8 +939,32 @@ const generateCode = (components: CircuitComponent[]) => {
   return code;
 };
 
+const SerialMonitor = ({ output, onClose }: { output: string[], onClose: () => void }) => {
+  const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [output]);
+
+  return (
+    <div className="serial-monitor">
+      <div className="serial-header">
+        <h3>Serial Monitor</h3>
+        <button onClick={onClose} className="close-btn">×</button>
+      </div>
+      <div className="serial-content">
+        {output.map((line, i) => (
+          <div key={i} className="serial-line">{line}</div>
+        ))}
+        <div ref={endRef} />
+      </div>
+    </div>
+  );
+};
+
 function App() {
   const [showCode, setShowCode] = useState(true);
+  const [showSerial, setShowSerial] = useState(false);
   const [components, setComponents] = useState<CircuitComponent[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -936,6 +972,7 @@ function App() {
   // Simulation State
   const [pinValues, setPinValues] = useState<Record<string, boolean>>({});
   const [buttonStates, setButtonStates] = useState<Record<string, boolean>>({});
+  const [serialOutput, setSerialOutput] = useState<string[]>([]);
 
   const code = generateCode(components);
 
@@ -945,11 +982,75 @@ function App() {
       return;
     }
 
+    // Clear serial on start
+    setSerialOutput([]);
+
+    // Helper to draw text on OLED
+    const drawOledText = (text: string[]) => {
+      const oled = document.querySelector('wokwi-ssd1306') as any;
+      if (!oled) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, 128, 64);
+      ctx.fillStyle = 'white';
+      ctx.font = '10px monospace';
+
+      text.forEach((line, i) => {
+        ctx.fillText(line, 0, 10 + (i * 12));
+      });
+
+      if (oled.imageData) {
+        const imageData = ctx.getImageData(0, 0, 128, 64);
+        oled.imageData.data.set(imageData.data);
+        oled.redraw();
+      }
+    };
+
+    let time = 0;
     const interval = setInterval(() => {
+      time += 0.1;
       const newPinValues: Record<string, boolean> = {};
 
       const buttons = components.filter(c => c.type === 'pushbutton' && c.pin);
       const leds = components.filter(c => c.type === 'led' && c.pin);
+      const mpus = components.filter(c => c.type === 'mpu6050');
+      const oleds = components.filter(c => c.type === 'ssd1306');
+
+      // MPU6050 Simulation
+      if (mpus.length > 0) {
+        // Simulate accelerometer values with sine waves
+        const ax = Math.round(Math.sin(time) * 16000);
+        const ay = Math.round(Math.cos(time * 0.5) * 16000);
+        const az = Math.round(Math.sin(time * 0.2) * 16000);
+
+        // Update Serial Monitor (throttle to avoid flooding)
+        if (Math.floor(time * 10) % 5 === 0) {
+          setSerialOutput(prev => {
+            const newLine = `MPU6050: AX=${ax} AY=${ay} AZ=${az}`;
+            const newLog = [...prev, newLine];
+            if (newLog.length > 50) return newLog.slice(newLog.length - 50);
+            return newLog;
+          });
+        }
+
+        if (oleds.length > 0) {
+          drawOledText([
+            'MPU6050 Data',
+            `AX: ${ax}`,
+            `AY: ${ay}`,
+            `AZ: ${az}`
+          ]);
+        }
+      } else if (oleds.length > 0) {
+        // Default OLED text if no MPU
+        drawOledText(['Hello, World!', 'Arduino Simulator']);
+      }
 
       buttons.forEach(btn => {
         if (btn.pin) {
@@ -966,6 +1067,12 @@ function App() {
             if (led.pin) newPinValues[led.pin] = signal;
           });
         }
+      } else if (leds.length > 0) {
+        // Blink LED if no buttons
+        const blink = Math.floor(time * 5) % 2 === 0;
+        leds.forEach(led => {
+          if (led.pin) newPinValues[led.pin] = blink;
+        });
       }
 
       setPinValues(newPinValues);
@@ -1056,6 +1163,12 @@ function App() {
         </div>
         <div className="toolbar">
           <button
+            onClick={() => setShowSerial(!showSerial)}
+            className={`toolbar-btn ${showSerial ? 'active' : ''}`}
+          >
+            📟 Serial Monitor
+          </button>
+          <button
             onClick={() => setShowCode(!showCode)}
             className={`toolbar-btn ${showCode ? 'active' : ''}`}
           >
@@ -1078,6 +1191,7 @@ function App() {
             onButtonPress={handleButtonPress}
             onPositionUpdate={handlePositionUpdate}
           />
+          {showSerial && <SerialMonitor output={serialOutput} onClose={() => setShowSerial(false)} />}
           {showCode && <CodePanel code={code} />}
         </div>
         {selectedComponent && selectedComponent.type !== 'arduino-uno' && (
