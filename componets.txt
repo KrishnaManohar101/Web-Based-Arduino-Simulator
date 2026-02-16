@@ -1,0 +1,39 @@
+Microcontrollers
+arduino-uno
+arduino-nano
+arduino-mega
+esp32-devkit-v1
+franzininho
+nano-rp2040-connect
+Input / Sensors
+pushbutton & pushbutton-6mm
+analog-joystick
+slide-switch & dip-switch-8
+potentiometer & slide-potentiometer
+membrane-keypad
+rotary-dialer & ky-040 (Rotary Encoder)
+dht22 (Temp/Humidity)
+ntc-temperature-sensor
+photoresistor-sensor
+pir-motion-sensor
+hc-sr04 (Ultrasonic)
+gas-sensor
+flame-sensor
+sound-sensor (big & small)
+heart-beat-sensor
+mpu6050 (Accelerometer/Gyro)
+tilt-switch
+ir-receiver & ir-remote
+Output / Display
+led, rgb-led, led-bar-graph, led-ring
+7segment
+lcd1602 & lcd2004
+ssd1306 (OLED)
+oli9341 (TFT)
+buzzer
+neopixel & neopixel-matrix
+Motors & Actuators
+servo
+stepper-motor
+biaxial-stepper
+ks2e-m-dc5 (5V Relay)

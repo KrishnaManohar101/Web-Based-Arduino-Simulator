@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, type DragEvent } from 'react';
 import '@wokwi/elements';
 import './App.css';
 
-type ComponentType = 'arduino-uno' | 'led' | 'pushbutton';
+type ComponentType = 'arduino-uno' | 'led' | 'pushbutton' | 'mpu6050';
 
 interface CircuitComponent {
   id: string;
@@ -15,6 +15,7 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; icon: string }[] 
   { type: 'arduino-uno', label: 'Arduino Uno', icon: '🔷' },
   { type: 'led', label: 'LED', icon: '💡' },
   { type: 'pushbutton', label: 'Push Button', icon: '🔘' },
+  { type: 'mpu6050', label: 'MPU6050', icon: '📟' },
 ];
 
 // Arduino Uno pin positions (relative offsets from the Arduino component top-left)
@@ -39,6 +40,17 @@ const ARDUINO_PIN_OFFSETS: Record<string, { x: number; y: number }> = {
   // Power pins (also at bottom)
   '5V': { x: 165, y: 195 },
   '3.3V': { x: 155, y: 195 },
+  // Analog pins (I2C)
+  'A4': { x: 263, y: 195 }, // SDA
+  'A5': { x: 273, y: 195 }, // SCL
+};
+
+// MPU6050 pin offsets
+const MPU6050_PIN_OFFSETS = {
+  VCC: { x: 8, y: 8 },
+  GND: { x: 23, y: 8 },
+  SCL: { x: 38, y: 8 },
+  SDA: { x: 53, y: 8 },
 };
 
 // Component-specific pin offsets (relative to component's top-left position)
@@ -73,6 +85,9 @@ const Sidebar = () => {
       case 'pushbutton':
         // @ts-ignore
         return <wokwi-pushbutton color="red" />;
+      case 'mpu6050':
+        // @ts-ignore
+        return <wokwi-mpu6050 style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }} />;
       default:
         return null;
     }
@@ -224,6 +239,7 @@ const WireLayer = ({
           labelPos: { x: (arduinoGndX + cathodeX) / 2, y: gndMidY - 10 }
         });
       } else if (comp.type === 'pushbutton') {
+        // ... (existing button wiring logic) ...
         // Button signal pin to Digital Pin
         const signalX = comp.position.x + BUTTON_PIN_OFFSETS.signal1.x;
         const signalY = comp.position.y + BUTTON_PIN_OFFSETS.signal1.y;
@@ -250,6 +266,64 @@ const WireLayer = ({
           color: '#333333',
           label: 'GND',
           labelPos: { x: (arduinoGndX + gndX) / 2, y: gndMidY - 10 }
+        });
+      } else if (comp.type === 'mpu6050') {
+        // MPU6050 Wiring
+        // VCC -> 5V
+        const vccX = comp.position.x + MPU6050_PIN_OFFSETS.VCC.x;
+        const vccY = comp.position.y + MPU6050_PIN_OFFSETS.VCC.y;
+        const arduino5V = ARDUINO_PIN_OFFSETS['5V'];
+        const a5vX = arduinoPosition.x + arduino5V.x;
+        const a5vY = arduinoPosition.y + arduino5V.y;
+
+        wires.push({
+          id: `${comp.id}-vcc`,
+          path: `M ${a5vX} ${a5vY} C ${a5vX} ${(a5vY + vccY) / 2}, ${vccX} ${(a5vY + vccY) / 2}, ${vccX} ${vccY}`,
+          color: '#ff4444',
+          label: '5V',
+          labelPos: { x: (a5vX + vccX) / 2, y: (a5vY + vccY) / 2 }
+        });
+
+        // GND -> GND
+        const gndX = comp.position.x + MPU6050_PIN_OFFSETS.GND.x;
+        const gndY = comp.position.y + MPU6050_PIN_OFFSETS.GND.y;
+
+        wires.push({
+          id: `${comp.id}-gnd`,
+          path: `M ${arduinoGndX} ${arduinoGndY} C ${arduinoGndX} ${(arduinoGndY + gndY) / 2}, ${gndX} ${(arduinoGndY + gndY) / 2}, ${gndX} ${gndY}`,
+          color: '#333333',
+          label: 'GND',
+          labelPos: { x: (arduinoGndX + gndX) / 2, y: (arduinoGndY + gndY) / 2 }
+        });
+
+        // SCL -> A5
+        const sclX = comp.position.x + MPU6050_PIN_OFFSETS.SCL.x;
+        const sclY = comp.position.y + MPU6050_PIN_OFFSETS.SCL.y;
+        const arduinoSCL = ARDUINO_PIN_OFFSETS['A5'];
+        const asclX = arduinoPosition.x + arduinoSCL.x;
+        const asclY = arduinoPosition.y + arduinoSCL.y;
+
+        wires.push({
+          id: `${comp.id}-scl`,
+          path: `M ${asclX} ${asclY} C ${asclX} ${(asclY + sclY) / 2}, ${sclX} ${(asclY + sclY) / 2}, ${sclX} ${sclY}`,
+          color: '#FFeb3b', // Yellow
+          label: 'SCL',
+          labelPos: { x: (asclX + sclX) / 2, y: (asclY + sclY) / 2 }
+        });
+
+        // SDA -> A4
+        const sdaX = comp.position.x + MPU6050_PIN_OFFSETS.SDA.x;
+        const sdaY = comp.position.y + MPU6050_PIN_OFFSETS.SDA.y;
+        const arduinoSDA = ARDUINO_PIN_OFFSETS['A4'];
+        const asdaX = arduinoPosition.x + arduinoSDA.x;
+        const asdaY = arduinoPosition.y + arduinoSDA.y;
+
+        wires.push({
+          id: `${comp.id}-sda`,
+          path: `M ${asdaX} ${asdaY} C ${asdaX} ${(asdaY + sdaY) / 2}, ${sdaX} ${(asdaY + sdaY) / 2}, ${sdaX} ${sdaY}`,
+          color: '#4CAF50', // Green
+          label: 'SDA',
+          labelPos: { x: (asdaX + sdaX) / 2, y: (asdaY + sdaY) / 2 }
         });
       }
     });
@@ -461,12 +535,17 @@ const Canvas = ({
                 {isRunning && <div className="button-hint">Click & Hold</div>}
               </div>
             )}
+            {comp.type === 'mpu6050' && (
+              // @ts-ignore
+              <wokwi-mpu6050 />
+            )}
           </div>
         ))}
       </div>
     </div>
   );
 };
+
 
 
 const CodePanel = ({ code }: { code: string }) => (
@@ -482,21 +561,30 @@ const CodePanel = ({ code }: { code: string }) => (
 const generateCode = (components: CircuitComponent[]) => {
   const leds = components.filter(c => c.type === 'led' && c.pin);
   const buttons = components.filter(c => c.type === 'pushbutton' && c.pin);
+  const mpus = components.filter(c => c.type === 'mpu6050');
 
-  if (leds.length === 0 && buttons.length === 0) {
+  if (leds.length === 0 && buttons.length === 0 && mpus.length === 0) {
     return `// Arduino Simulator
 // =====================
 // Add components to generate code
 //
 // Default Pin Mapping:
 // - LED → Digital Pin 10
-// - Push Button → Digital Pin 2`;
+// - Push Button → Digital Pin 2
+// - MPU6050 → SDA (A4), SCL (A5)`;
   }
 
   let code = `// Auto-generated Arduino Code
 // ===========================
 
 `;
+
+  // MPU6050 Includes
+  if (mpus.length > 0) {
+    code += `#include <Wire.h>\n`;
+    code += `#include <MPU6050.h>\n\n`;
+    code += `MPU6050 mpu;\n\n`;
+  }
 
   // Pin definitions
   code += `// Pin Definitions\n`;
@@ -509,6 +597,12 @@ const generateCode = (components: CircuitComponent[]) => {
 
   // Setup function
   code += `\nvoid setup() {\n`;
+  code += `  Serial.begin(9600);\n`;
+  if (mpus.length > 0) {
+    code += `  Wire.begin();\n`;
+    code += `  mpu.initialize();\n`;
+    code += `  Serial.println("MPU6050 Initialized");\n`;
+  }
   leds.forEach((_, i) => {
     code += `  pinMode(ledPin${i > 0 ? i + 1 : ''}, OUTPUT);\n`;
   });
@@ -519,6 +613,16 @@ const generateCode = (components: CircuitComponent[]) => {
 
   // Loop function
   code += `void loop() {\n`;
+  if (mpus.length > 0) {
+    code += `  // MPU6050 Read\n`;
+    code += `  int16_t ax, ay, az;\n`;
+    code += `  int16_t gx, gy, gz;\n`;
+    code += `  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);\n`;
+    code += `  Serial.print("AX: "); Serial.print(ax);\n`;
+    code += `  Serial.print(" AY: "); Serial.print(ay);\n`;
+    code += `  Serial.print(" AZ: "); Serial.println(az);\n`;
+    code += `  delay(100);\n\n`;
+  }
   if (buttons.length > 0 && leds.length > 0) {
     code += `  // Read button states\n`;
     buttons.forEach((_, i) => {
@@ -526,13 +630,13 @@ const generateCode = (components: CircuitComponent[]) => {
       code += `  int buttonState${suffix} = digitalRead(buttonPin${suffix});\n`;
     });
     code += `\n`;
-    
+
     // Build condition for any button pressed
     const buttonConditions = buttons.map((_, i) => {
       const suffix = i > 0 ? i + 1 : '';
       return `buttonState${suffix} == HIGH`;
     }).join(' || ');
-    
+
     code += `  // Control LED based on button(s)\n`;
     code += `  if (${buttonConditions}) {\n`;
     leds.forEach((_, i) => {
