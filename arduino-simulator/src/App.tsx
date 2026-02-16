@@ -40,17 +40,18 @@ const ARDUINO_PIN_OFFSETS: Record<string, { x: number; y: number }> = {
   // Power pins (also at bottom)
   '5V': { x: 165, y: 195 },
   '3.3V': { x: 155, y: 195 },
-  // Analog pins (I2C)
-  'A4': { x: 263, y: 195 }, // SDA
-  'A5': { x: 273, y: 195 }, // SCL
+  // Analog pins (I2C) - Adjusted left by 12px to align with pins
+  'A4': { x: 251, y: 195 }, // SDA
+  'A5': { x: 261, y: 195 }, // SCL
 };
 
 // MPU6050 pin offsets
 const MPU6050_PIN_OFFSETS = {
-  VCC: { x: 8, y: 8 },
-  GND: { x: 23, y: 8 },
-  SCL: { x: 38, y: 8 },
-  SDA: { x: 53, y: 8 },
+  // Adjusted for actual pin layout (INT, AD0, XCL, XDA, SDA, SCL, GND, VCC) Wokwi-MPU6050
+  VCC: { x: 79, y: 8 },   // Pin 8 (VCC) - spacing corrected to 10px from GND (69 + 10) 
+  GND: { x: 69, y: 8 },   // Pin 7 (GND) - visually verified
+  SCL: { x: 59, y: 8 },   // Pin 6 (SCL)
+  SDA: { x: 49, y: 8 },   // Pin 5 (SDA)
 };
 
 // Component-specific pin offsets (relative to component's top-left position)
@@ -196,8 +197,73 @@ const WireLayer = ({
   }> = [];
 
   components
-    .filter(c => c.type !== 'arduino-uno' && c.pin)
+  components
+    .filter(c => c.type !== 'arduino-uno' && (c.pin || c.type === 'mpu6050'))
     .forEach(comp => {
+      if (comp.type === 'mpu6050') {
+        // MPU6050 Wiring
+        // VCC -> 5V
+        const vccX = comp.position.x + MPU6050_PIN_OFFSETS.VCC.x;
+        const vccY = comp.position.y + MPU6050_PIN_OFFSETS.VCC.y;
+        const arduino5V = ARDUINO_PIN_OFFSETS['5V'];
+        const a5vX = arduinoPosition.x + arduino5V.x;
+        const a5vY = arduinoPosition.y + arduino5V.y;
+
+        wires.push({
+          id: `${comp.id}-vcc`,
+          path: `M ${a5vX} ${a5vY} C ${a5vX} ${(a5vY + vccY) / 2}, ${vccX} ${(a5vY + vccY) / 2}, ${vccX} ${vccY}`,
+          color: '#ff4444',
+          label: '5V',
+          labelPos: { x: (a5vX + vccX) / 2, y: (a5vY + vccY) / 2 }
+        });
+
+        // GND -> GND
+        const gndOffset = ARDUINO_PIN_OFFSETS['GND1'];
+        const arduinoGndX = arduinoPosition.x + gndOffset.x;
+        const arduinoGndY = arduinoPosition.y + gndOffset.y;
+        const gndX = comp.position.x + MPU6050_PIN_OFFSETS.GND.x;
+        const gndY = comp.position.y + MPU6050_PIN_OFFSETS.GND.y;
+
+        wires.push({
+          id: `${comp.id}-gnd`,
+          path: `M ${arduinoGndX} ${arduinoGndY} C ${arduinoGndX} ${(arduinoGndY + gndY) / 2}, ${gndX} ${(arduinoGndY + gndY) / 2}, ${gndX} ${gndY}`,
+          color: '#333333',
+          label: 'GND',
+          labelPos: { x: (arduinoGndX + gndX) / 2, y: (arduinoGndY + gndY) / 2 }
+        });
+
+        // SCL -> A5
+        const sclX = comp.position.x + MPU6050_PIN_OFFSETS.SCL.x;
+        const sclY = comp.position.y + MPU6050_PIN_OFFSETS.SCL.y;
+        const arduinoSCL = ARDUINO_PIN_OFFSETS['A5'];
+        const asclX = arduinoPosition.x + arduinoSCL.x;
+        const asclY = arduinoPosition.y + arduinoSCL.y;
+
+        wires.push({
+          id: `${comp.id}-scl`,
+          path: `M ${asclX} ${asclY} C ${asclX} ${(asclY + sclY) / 2}, ${sclX} ${(asclY + sclY) / 2}, ${sclX} ${sclY}`,
+          color: '#FFeb3b', // Yellow
+          label: 'SCL',
+          labelPos: { x: (asclX + sclX) / 2, y: (asclY + sclY) / 2 }
+        });
+
+        // SDA -> A4
+        const sdaX = comp.position.x + MPU6050_PIN_OFFSETS.SDA.x;
+        const sdaY = comp.position.y + MPU6050_PIN_OFFSETS.SDA.y;
+        const arduinoSDA = ARDUINO_PIN_OFFSETS['A4'];
+        const asdaX = arduinoPosition.x + arduinoSDA.x;
+        const asdaY = arduinoPosition.y + arduinoSDA.y;
+
+        wires.push({
+          id: `${comp.id}-sda`,
+          path: `M ${asdaX} ${asdaY} C ${asdaX} ${(asdaY + sdaY) / 2}, ${sdaX} ${(asdaY + sdaY) / 2}, ${sdaX} ${sdaY}`,
+          color: '#4CAF50', // Green
+          label: 'SDA',
+          labelPos: { x: (asdaX + sdaX) / 2, y: (asdaY + sdaY) / 2 }
+        });
+        return;
+      }
+
       const pinOffset = ARDUINO_PIN_OFFSETS[comp.pin!];
       if (!pinOffset) return;
 
@@ -266,64 +332,6 @@ const WireLayer = ({
           color: '#333333',
           label: 'GND',
           labelPos: { x: (arduinoGndX + gndX) / 2, y: gndMidY - 10 }
-        });
-      } else if (comp.type === 'mpu6050') {
-        // MPU6050 Wiring
-        // VCC -> 5V
-        const vccX = comp.position.x + MPU6050_PIN_OFFSETS.VCC.x;
-        const vccY = comp.position.y + MPU6050_PIN_OFFSETS.VCC.y;
-        const arduino5V = ARDUINO_PIN_OFFSETS['5V'];
-        const a5vX = arduinoPosition.x + arduino5V.x;
-        const a5vY = arduinoPosition.y + arduino5V.y;
-
-        wires.push({
-          id: `${comp.id}-vcc`,
-          path: `M ${a5vX} ${a5vY} C ${a5vX} ${(a5vY + vccY) / 2}, ${vccX} ${(a5vY + vccY) / 2}, ${vccX} ${vccY}`,
-          color: '#ff4444',
-          label: '5V',
-          labelPos: { x: (a5vX + vccX) / 2, y: (a5vY + vccY) / 2 }
-        });
-
-        // GND -> GND
-        const gndX = comp.position.x + MPU6050_PIN_OFFSETS.GND.x;
-        const gndY = comp.position.y + MPU6050_PIN_OFFSETS.GND.y;
-
-        wires.push({
-          id: `${comp.id}-gnd`,
-          path: `M ${arduinoGndX} ${arduinoGndY} C ${arduinoGndX} ${(arduinoGndY + gndY) / 2}, ${gndX} ${(arduinoGndY + gndY) / 2}, ${gndX} ${gndY}`,
-          color: '#333333',
-          label: 'GND',
-          labelPos: { x: (arduinoGndX + gndX) / 2, y: (arduinoGndY + gndY) / 2 }
-        });
-
-        // SCL -> A5
-        const sclX = comp.position.x + MPU6050_PIN_OFFSETS.SCL.x;
-        const sclY = comp.position.y + MPU6050_PIN_OFFSETS.SCL.y;
-        const arduinoSCL = ARDUINO_PIN_OFFSETS['A5'];
-        const asclX = arduinoPosition.x + arduinoSCL.x;
-        const asclY = arduinoPosition.y + arduinoSCL.y;
-
-        wires.push({
-          id: `${comp.id}-scl`,
-          path: `M ${asclX} ${asclY} C ${asclX} ${(asclY + sclY) / 2}, ${sclX} ${(asclY + sclY) / 2}, ${sclX} ${sclY}`,
-          color: '#FFeb3b', // Yellow
-          label: 'SCL',
-          labelPos: { x: (asclX + sclX) / 2, y: (asclY + sclY) / 2 }
-        });
-
-        // SDA -> A4
-        const sdaX = comp.position.x + MPU6050_PIN_OFFSETS.SDA.x;
-        const sdaY = comp.position.y + MPU6050_PIN_OFFSETS.SDA.y;
-        const arduinoSDA = ARDUINO_PIN_OFFSETS['A4'];
-        const asdaX = arduinoPosition.x + arduinoSDA.x;
-        const asdaY = arduinoPosition.y + arduinoSDA.y;
-
-        wires.push({
-          id: `${comp.id}-sda`,
-          path: `M ${asdaX} ${asdaY} C ${asdaX} ${(asdaY + sdaY) / 2}, ${sdaX} ${(asdaY + sdaY) / 2}, ${sdaX} ${sdaY}`,
-          color: '#4CAF50', // Green
-          label: 'SDA',
-          labelPos: { x: (asdaX + sdaX) / 2, y: (asdaY + sdaY) / 2 }
         });
       }
     });
