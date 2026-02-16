@@ -98,21 +98,27 @@ const ARDUINO_PIN_OFFSETS: Record<string, { x: number; y: number }> = {
 };
 
 // MPU6050 pin offsets
+// MPU6050 pin offsets
 const MPU6050_PIN_OFFSETS = {
-  // Adjusted for actual pin layout (INT, AD0, XCL, XDA, SDA, SCL, GND, VCC) Wokwi-MPU6050
-  VCC: { x: 79, y: 8 },   // Pin 8 (VCC) - spacing corrected to 10px from GND (69 + 10) 
-  GND: { x: 69, y: 8 },   // Pin 7 (GND) - visually verified
-  SCL: { x: 59, y: 8 },   // Pin 6 (SCL)
-  SDA: { x: 49, y: 8 },   // Pin 5 (SDA)
+  // Adjusted for actual pin layout from mpu6050-element.js pinInfo (y: 5.78)
+  // Offsets include +4px padding from .canvas-component
+  VCC: { x: 78.4, y: 9.78 },   // VCC (74.4 + 4)
+  GND: { x: 68.8, y: 9.78 },   // GND (64.8 + 4)
+  SCL: { x: 59.2, y: 9.78 },   // SCL (55.2 + 4)
+  SDA: { x: 49.6, y: 9.78 },   // SDA (45.6 + 4)
 };
 
-// SSD1306 OLED pin offsets (Based on 8-pin layout: SDA, SCL, DC, RST, CS, 3V3, VIN, GND)
-// Pin 1 (SDA) is at x=23, spacing ~15px
+// SSD1306 OLED pin offsets (Based on 8-pin layout from Wokwi source)
+// Pins: DATA (SDA), CLK (SCL), DC, RST, CS, 3V3, VIN, GND
+// Offsets derived from ssd1306-element.js pinInfo + 4px padding from .canvas-component
 const SSD1306_PIN_OFFSETS = {
-  SDA: { x: 23, y: 8 },   // Pin 1
-  SCL: { x: 38, y: 8 },   // Pin 2
-  VCC: { x: 113, y: 8 },  // Pin 7 (Vin)
-  GND: { x: 128, y: 8 },  // Pin 8 (GND)
+  SDA: { x: 40.5, y: 16.5 },   // DATA (36.5 + 4)
+  SCL: { x: 49.5, y: 16.5 },   // CLK (45.5 + 4)
+  DC: { x: 58.5, y: 16.5 },
+  RST: { x: 68.5, y: 16.5 },
+  CS: { x: 78.5, y: 16.5 },
+  VCC: { x: 97.5, y: 16.5 },   // VIN (93.5 + 4) - Using VIN for 5V connection
+  GND: { x: 107.5, y: 16 },    // GND (103.5 + 4, y: 12 + 4)
 };
 
 // Component-specific pin offsets (relative to component's top-left position)
